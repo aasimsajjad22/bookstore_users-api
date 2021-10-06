@@ -1,6 +1,7 @@
 package mysql_utils
 
 import (
+	"fmt"
 	"github.com/aasimsajjad22/bookstore_users-api/utils/errors"
 	"github.com/go-sql-driver/mysql"
 	"strings"
@@ -12,6 +13,7 @@ const (
 
 func ParseError(err error) *errors.RestErr  {
 	sqlErr, ok := err.(*mysql.MySQLError)
+	fmt.Println(err)
 	if !ok {
 		if strings.Contains(err.Error(), errorNoRows) {
 			return errors.NewNotFoundError("no record matching given id")
