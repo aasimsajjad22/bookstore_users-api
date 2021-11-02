@@ -4,6 +4,6 @@ import (
 	"github.com/aasimsajjad22/bookstore_users-api/app"
 )
 
-func main()  {
+func main() {
 	app.StartApplication()
 }
