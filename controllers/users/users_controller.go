@@ -4,7 +4,7 @@ import (
 	"github.com/aasimsajjad22/bookstore_oauth-go/oauth"
 	"github.com/aasimsajjad22/bookstore_users-api/domain/users"
 	"github.com/aasimsajjad22/bookstore_users-api/services"
-	"github.com/aasimsajjad22/bookstore_users-api/utils/errors"
+	"github.com/aasimsajjad22/bookstore_utils-go/rest_errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -17,7 +17,7 @@ func Get(c *gin.Context) {
 	}
 	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
 	if userErr != nil {
-		err := errors.NewBadRequestError("user id should be number")
+		err := rest_errors.NewBadRequestError("user id should be number")
 		c.JSON(err.Status, err)
 		return
 	}
@@ -36,7 +36,7 @@ func Get(c *gin.Context) {
 func Create(c *gin.Context) {
 	var user users.User
 	if err := c.ShouldBindJSON(&user); err != nil {
-		restErr := errors.NewBadRequestError("invalid json body")
+		restErr := rest_errors.NewBadRequestError("invalid json body")
 		c.JSON(restErr.Status, restErr)
 		return
 	}
@@ -51,13 +51,13 @@ func Create(c *gin.Context) {
 func Update(c *gin.Context) {
 	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
 	if userErr != nil {
-		err := errors.NewBadRequestError("user id should be number")
+		err := rest_errors.NewBadRequestError("user id should be number")
 		c.JSON(err.Status, err)
 		return
 	}
 	var user users.User
 	if err := c.ShouldBindJSON(&user); err != nil {
-		restErr := errors.NewBadRequestError("invalid json body")
+		restErr := rest_errors.NewBadRequestError("invalid json body")
 		c.JSON(restErr.Status, restErr)
 		return
 	}
@@ -74,7 +74,7 @@ func Update(c *gin.Context) {
 func Delete(c *gin.Context) {
 	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
 	if userErr != nil {
-		err := errors.NewBadRequestError("user id should be number")
+		err := rest_errors.NewBadRequestError("user id should be number")
 		c.JSON(err.Status, err)
 		return
 	}
@@ -99,7 +99,7 @@ func Search(c *gin.Context) {
 func Login(c *gin.Context) {
 	var request users.LoginRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		restErr := errors.NewBadRequestError("invalid json body")
+		restErr := rest_errors.NewBadRequestError("invalid json body")
 		c.JSON(restErr.Status, err)
 		return
 	}

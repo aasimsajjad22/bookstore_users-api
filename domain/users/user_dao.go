@@ -1,11 +1,12 @@
 package users
 
 import (
+	"errors"
 	"fmt"
 	"github.com/aasimsajjad22/bookstore_users-api/datasources/mysql/users_db"
 	"github.com/aasimsajjad22/bookstore_users-api/logger"
-	"github.com/aasimsajjad22/bookstore_users-api/utils/errors"
 	"github.com/aasimsajjad22/bookstore_users-api/utils/mysql_utils"
+	"github.com/aasimsajjad22/bookstore_utils-go/rest_errors"
 	"strings"
 )
 
@@ -18,91 +19,92 @@ const (
 	queryFindByEmailAndPassword = "SELECT id, first_name, last_name, email, status, date_created FROM users WHERE email = ? AND password = ? AND status = ?;"
 )
 
-func (user *User) FindByEmailAndPassword() *errors.RestErr {
+func (user *User) FindByEmailAndPassword() *rest_errors.RestErr {
 	stmt, err := users_db.Client.Prepare(queryFindByEmailAndPassword)
 	if err != nil {
 		logger.Error("error when trying to prepare statement to get user by email and password", err)
-		return errors.NewInternalServerError("database error")
+		return rest_errors.NewInternalServerError("error when tying to find user", errors.New("database error"))
 	}
 	defer stmt.Close()
 	result := stmt.QueryRow(user.Email, user.Password, StatusActive)
 	if getError := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.Status, &user.DateCreated); getError != nil {
 		if strings.Contains(getError.Error(), mysql_utils.ErrorNoRows) {
-			return errors.NewNotFoundError("invalid user credentials")
+			return rest_errors.NewNotFoundError("invalid user credentials")
 		}
 		logger.Error("error when trying to get user by email and password", getError)
-		return errors.NewInternalServerError("database error")
+		return rest_errors.NewInternalServerError("error when tying to find user", errors.New("database error"))
 	}
 	return nil
 }
 
-func (user *User) Get() *errors.RestErr {
+func (user *User) Get() *rest_errors.RestErr {
 	stmt, err := users_db.Client.Prepare(queryGetUser)
 	if err != nil {
 		logger.Error("error when trying to prepare GET statement", err)
-		return errors.NewInternalServerError("database error")
+		return rest_errors.NewInternalServerError("error when tying to get user", errors.New ("database error"))
 	}
 	defer stmt.Close()
 	result := stmt.QueryRow(user.Id)
 	if getError := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.Status, &user.DateCreated); getError != nil {
 		logger.Error("error when trying to get user by id", getError)
-		return errors.NewInternalServerError("error when tying to get user")
+		return rest_errors.NewInternalServerError("error when tying to get user", errors.New("database error"))
 	}
 	return nil
 }
 
-func (user *User) Save() *errors.RestErr {
+func (user *User) Save() *rest_errors.RestErr {
 	stmt, err := users_db.Client.Prepare(queryInsertUser)
 	if err != nil {
-		return errors.NewInternalServerError(err.Error())
+		return rest_errors.NewInternalServerError("error when tying to save user", errors.New("database error"))
 	}
 	defer stmt.Close()
 	insertResult, saveErr := stmt.Exec(user.FirstName, user.LastName, user.Email, user.Password, user.Status, user.DateCreated)
 	if saveErr != nil {
-		return mysql_utils.ParseError(saveErr)
+		logger.Error("error when trying to save user", saveErr)
+		return rest_errors.NewInternalServerError("error when tying to save user", errors.New("database error"))
 	}
 	userId, err := insertResult.LastInsertId()
 	if err != nil {
-		return errors.NewInternalServerError(fmt.Sprintf("error when trying to save user: %s", err.Error()))
+		return rest_errors.NewInternalServerError("error when tying to save user", errors.New("database error"))
 	}
 	user.Id = userId
 	return nil
 }
 
-func (user *User) Update() *errors.RestErr {
+func (user *User) Update() *rest_errors.RestErr {
 	stmt, err := users_db.Client.Prepare(queryUpdateUser)
 	if err != nil {
-		return errors.NewInternalServerError(err.Error())
+		return rest_errors.NewInternalServerError("error when tying to update user", errors.New("database error"))
 	}
 	defer stmt.Close()
 	_, err = stmt.Exec(user.FirstName, user.LastName, user.Email, user.Id)
 	if err != nil {
-		return mysql_utils.ParseError(err)
+		return rest_errors.NewInternalServerError("error when tying to update user", errors.New("database error"))
 	}
 	return nil
 }
 
-func (user *User) Delete() *errors.RestErr {
+func (user *User) Delete() *rest_errors.RestErr {
 	stmt, err := users_db.Client.Prepare(queryDeleteUser)
 	if err != nil {
-		return errors.NewInternalServerError(err.Error())
+		return rest_errors.NewInternalServerError("error when tying to update user", errors.New("database error"))
 	}
 	defer stmt.Close()
 	if _, err = stmt.Exec(user.Id); err != nil {
-		return mysql_utils.ParseError(err)
+		return rest_errors.NewInternalServerError("error when tying to save user", errors.New("database error"))
 	}
 	return nil
 }
 
-func (user *User) FindByStatus(status string) ([]User, *errors.RestErr) {
+func (user *User) FindByStatus(status string) ([]User, *rest_errors.RestErr) {
 	stmt, err := users_db.Client.Prepare(queryFindByStatus)
 	if err != nil {
-		return nil, errors.NewInternalServerError(err.Error())
+		return nil, rest_errors.NewInternalServerError("error when tying to get user", errors.New("database error"))
 	}
 	defer stmt.Close()
 	rows, err := stmt.Query(status)
 	if err != nil {
-		return nil, errors.NewInternalServerError(err.Error())
+		return nil, rest_errors.NewInternalServerError("error when tying to get user", errors.New("database error"))
 	}
 	defer rows.Close()
 
@@ -110,12 +112,12 @@ func (user *User) FindByStatus(status string) ([]User, *errors.RestErr) {
 	for rows.Next() {
 		var user User
 		if err := rows.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.Status); err != nil {
-			return nil, mysql_utils.ParseError(err)
+			return nil, rest_errors.NewInternalServerError("error when tying to gett user", errors.New("database error"))
 		}
 		results = append(results, user)
 	}
 	if len(results) == 0 {
-		return nil, errors.NewNotFoundError(fmt.Sprintf("No users matching status %s", status))
+		return nil, rest_errors.NewNotFoundError(fmt.Sprintf("no users matching status %s", status))
 	}
 	return results, nil
 }

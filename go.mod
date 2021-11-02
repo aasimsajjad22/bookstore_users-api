@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/aasimsajjad22/bookstore_oauth-go v0.0.0-20211028082921-265dfa77487f
+	github.com/aasimsajjad22/bookstore_utils-go v0.0.0-20211102101254-20f642fba4f1
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/mercadolibre/golang-restclient v0.0.0-20170701022150-51958130a0a0 // indirect
